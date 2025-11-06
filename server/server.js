@@ -3,46 +3,43 @@ const path = require('path');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-require('dotenv').config(); // loads PORT from .env if present
+require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: '*'
+  }
+});
 
-// serve client static files
 app.use(express.static(path.join(__dirname, '..', 'client')));
 
 const PORT = process.env.PORT || 3000;
-
 let connectedCount = 0;
 
 io.on('connection', (socket) => {
   connectedCount++;
-  console.log('Client connected:', socket.id, 'total:', connectedCount);
-
-  // notify all clients about current user count
+  console.log('✅  User connected:', socket.id);
   io.emit('users', { count: connectedCount });
 
+  // when client sends a drawing event, forward it to everyone except sender
   socket.on('draw', (data) => {
-    // broadcast drawing event to other clients
     socket.broadcast.emit('draw', data);
   });
 
-  socket.on('cursor', (data) => {
-    socket.broadcast.emit('cursor', { id: socket.id, ...data });
-  });
-
+  // undo from one user → broadcast to all others
   socket.on('undo', () => {
     socket.broadcast.emit('undo');
   });
 
   socket.on('disconnect', () => {
     connectedCount--;
-    console.log('Client disconnected:', socket.id, 'total:', connectedCount);
     io.emit('users', { count: connectedCount });
+    console.log('❌  User disconnected:', socket.id);
   });
 });
 
 server.listen(PORT, () => {
-  console.log(`Server listening on http://localhost:${PORT}`);
+  console.log(`🎨  Server listening on http://localhost:${PORT}`);
 });
