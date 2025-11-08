@@ -24,14 +24,18 @@ export function initCanvas() {
   });
 
   // 🟢 When someone else undoes, restore previous snapshot
-  socket.on("undo", () => {
+  socket.on("undo", (data) => {
     console.log("Undo received from another user");
-    if (history.length === 0) return;
-    const imgData = history.pop();
+    if (!data || !data.image) return;
+    pushHistory(); // Save current state before applying remote undo
     const img = new Image();
-    img.onload = () => ctx.drawImage(img, 0, 0);
-    img.src = imgData;
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas first
+      ctx.drawImage(img, 0, 0);
+    };
+    img.src = data.image;
   });
+
 }
 
 function resizeCanvas() {
@@ -59,7 +63,10 @@ function draw(e) {
 }
 
 function stopDraw() {
-  drawing = false;
+  if (drawing) {
+    drawing = false;
+    pushHistory(); // Save state after completing a stroke
+  }
 }
 
 function getPos(e) {
@@ -83,13 +90,20 @@ function pushHistory() {
 
 export function undo() {
   if (history.length === 0) return;
-  const imgData = history.pop();
-  const img = new Image();
-  img.onload = () => ctx.drawImage(img, 0, 0);
-  img.src = imgData;
 
-  // broadcast to others (but don’t trigger recursive undo)
-  socket.emit("undo");
+  // Pop previous snapshot
+  const imgData = history.pop();
+
+  const img = new Image();
+  img.onload = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas first
+    ctx.drawImage(img, 0, 0);
+    
+    // Send current canvas image to everyone else
+    const currentImage = canvas.toDataURL();
+    socket.emit("undo", { image: currentImage });
+  };
+  img.src = imgData;
 }
 
 export function setColor(newColor) {

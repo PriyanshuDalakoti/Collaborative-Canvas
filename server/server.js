@@ -29,9 +29,10 @@ io.on('connection', (socket) => {
   });
 
   // undo from one user → broadcast to all others
-  socket.on('undo', () => {
-    socket.broadcast.emit('undo');
-  });
+socket.on('undo', (data) => {
+  socket.broadcast.emit('undo', data);
+});
+
 
   socket.on('disconnect', () => {
     connectedCount--;
