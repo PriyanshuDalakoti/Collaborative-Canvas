@@ -4,7 +4,7 @@ A real-time collaborative drawing application where multiple users can draw toge
 
 
 ## 🚀 Demo
-🔗 **Live App:** [https://collaborative-canvas.onrender.com](https://collaborative-canvas.onrender.com)  
+🔗 **Live App:** [https://collaborative-canvas-bhcu.onrender.com](https://collaborative-canvas-bhcu.onrender.com)  
 🔗 **GitHub Repo:** https://github.com/PriyanshuDalakoti/Collaborative-Canvas
 
 
